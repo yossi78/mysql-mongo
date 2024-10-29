@@ -11,11 +11,15 @@ import java.util.List;
 @Service
 public class UserService {
 
-    @Autowired
     private MySQLUserRepository mySQLUserRepository;
 
-    @Autowired
     private MongoUserRepository mongoUserRepository;
+
+    @Autowired
+    public UserService(MySQLUserRepository mySQLUserRepository, MongoUserRepository mongoUserRepository) {
+        this.mySQLUserRepository = mySQLUserRepository;
+        this.mongoUserRepository = mongoUserRepository;
+    }
 
     public User saveUser(User user) {
         if (isBusinessHours()) {
