@@ -25,9 +25,26 @@ public class UserController {
 
     @PostMapping
     public Object createUser(@RequestBody User user) {
-        return userService.createUser(user);
+        try {
+            Object savedUser = userService.createUser(user);
+            return new ResponseEntity<>(savedUser, HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("Failed to save user to DB ");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
+
+    @GetMapping
+    public ResponseEntity<List<Object>> getAllUsers() {
+        try {
+            List<Object> users = userService.getAllUsers();
+            return new ResponseEntity<>(users, HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("Failed to get all users from DB", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
 
 
     @GetMapping(path = "/{userId}")
@@ -44,16 +61,7 @@ public class UserController {
     }
 
 
-    @GetMapping
-    public ResponseEntity<List<User>> getAllUsers() {
-        try {
-            List<User> users = userService.getAllUsers();
-            return new ResponseEntity<>(users, HttpStatus.OK);
-        } catch (Exception e) {
-            log.error("Failed to get all users from DB", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
+
 
     @PutMapping("/{userId}")
     public ResponseEntity<User> updateUser(@PathVariable Long userId, @RequestBody User updatedUser) {

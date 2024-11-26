@@ -46,8 +46,13 @@ public class UserService {
         return user;
     }
 
-    public List<User> getAllUsers() {
-        List<User> users = mySQLUserRepository.findAll();
+    public List<Object> getAllUsers() {
+        List<Object> users;
+        if (isBusinessHours()) {
+            users = (List<Object>) (List<?>) mySQLUserRepository.findAll();
+        } else {
+            users = (List<Object>) (List<?>) mongoUserRepository.findAll();
+        }
         if(users==null){
             log.error("The users have not been found");
             throw new ResourceNotFoundException("The users have not been found");
@@ -84,8 +89,8 @@ public class UserService {
 
     private boolean isBusinessHours() {
         LocalTime now = LocalTime.now();
-//        return now.isAfter(LocalTime.of(8, 0)) && now.isBefore(LocalTime.of(10, 0));
-        return now.isAfter(LocalTime.of(8, 0)) && now.isBefore(LocalTime.of(17, 0));
+       return now.isAfter(LocalTime.of(8, 0)) && now.isBefore(LocalTime.of(10, 0));                         // MONGODB
+ //       return now.isAfter(LocalTime.of(8, 0)) && now.isBefore(LocalTime.of(17, 0));  // MYSQL
     }
 
 
