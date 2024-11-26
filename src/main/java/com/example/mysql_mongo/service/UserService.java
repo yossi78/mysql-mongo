@@ -33,7 +33,6 @@ public class UserService {
             return mySQLUserRepository.save(user);
         } else {
             UserDocument userDocument = UserDocument.builder()
-                    .id(String.valueOf(user.getId()))
                     .lastName(user.getLastName())
                     .firstName(user.getFirstName())
                     .build();
@@ -85,8 +84,8 @@ public class UserService {
 
     private boolean isBusinessHours() {
         LocalTime now = LocalTime.now();
-        return now.isAfter(LocalTime.of(8, 0)) && now.isBefore(LocalTime.of(10, 0));
-//        return now.isAfter(LocalTime.of(8, 0)) && now.isBefore(LocalTime.of(17, 0));
+//        return now.isAfter(LocalTime.of(8, 0)) && now.isBefore(LocalTime.of(10, 0));
+        return now.isAfter(LocalTime.of(8, 0)) && now.isBefore(LocalTime.of(17, 0));
     }
 
 
