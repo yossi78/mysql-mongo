@@ -4,12 +4,15 @@ import com.example.mysql_mongo.repository.MongoUserRepository;
 import com.example.mysql_mongo.repository.MySQLUserRepository;
 import com.example.mysql_mongo.repository.User;
 import com.example.mysql_mongo.repository.UserDocument;
+import com.example.mysql_mongo.util.ConvertUtil;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -41,8 +44,8 @@ public class UserService {
     }
 
 
-    public User getUser(Long userId) {
-        User user = checkUserExistance(userId);
+    public Object getUser(String userId) {
+        Object user = checkUserExistance(userId);
         return user;
     }
 
@@ -63,21 +66,43 @@ public class UserService {
 
 
 
-    public void deleteUser(Long userId) {
+    public List<User> migrationMongoToMySQl(){
+        List<UserDocument> users;
+        users =  mongoUserRepository.findAll();
+
+        List<User> mysqlList = users.stream()
+                .map(a -> {
+                    try {
+                        return new User(null,a.getFirstName(),a.getLastName());
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                }) // Mapping logic
+                .collect(Collectors.toList());
+        return mySQLUserRepository.saveAll(mysqlList);
+
+    }
+
+    public void deleteUser(String userId) {
         checkUserExistance(userId);
-        mySQLUserRepository.deleteById(userId);
+        mySQLUserRepository.deleteById(Long.valueOf(userId));
     }
 
 
-    public User updateUser(Long userId, User updatedUser) {
+    public User updateUser(String userId, User updatedUser) {
         checkUserExistance(userId);
-        updatedUser.setId(userId);
+        updatedUser.setId(Long.valueOf(userId));
         return mySQLUserRepository.save(updatedUser);
     }
 
 
-    private User checkUserExistance(Long userId){
-        User user =  mySQLUserRepository.findById(userId).orElse(null);
+    private Object checkUserExistance(String userId){
+        Object user;
+        if (isBusinessHours()) {
+            user = mySQLUserRepository.findById(Long.valueOf(userId)).orElse(null);
+        } else {
+            user = mongoUserRepository.findById(userId).orElse(null);
+        }
         if(user==null){
             log.error("The user has not been found , userId="+userId);
             throw new ResourceNotFoundException("The user has not been found");
@@ -89,8 +114,8 @@ public class UserService {
 
     private boolean isBusinessHours() {
         LocalTime now = LocalTime.now();
-       return now.isAfter(LocalTime.of(8, 0)) && now.isBefore(LocalTime.of(10, 0));                         // MONGODB
- //       return now.isAfter(LocalTime.of(8, 0)) && now.isBefore(LocalTime.of(17, 0));  // MYSQL
+  //    return now.isAfter(LocalTime.of(8, 0)) && now.isBefore(LocalTime.of(10, 0));                         // MONGODB
+        return now.isAfter(LocalTime.of(8, 0)) && now.isBefore(LocalTime.of(17, 0));  // MYSQL
     }
 
 

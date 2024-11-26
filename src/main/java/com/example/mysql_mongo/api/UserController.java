@@ -48,9 +48,9 @@ public class UserController {
 
 
     @GetMapping(path = "/{userId}")
-    public ResponseEntity<User> findUserById(@PathVariable("userId") Long userId) {
+    public ResponseEntity<Object> findUserById(@PathVariable("userId") String userId) {
         try {
-            User user = userService.getUser(userId);
+            Object user =userService.getUser(userId);
             return new ResponseEntity<>(user, HttpStatus.OK);
         }catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
@@ -64,7 +64,7 @@ public class UserController {
 
 
     @PutMapping("/{userId}")
-    public ResponseEntity<User> updateUser(@PathVariable Long userId, @RequestBody User updatedUser) {
+    public ResponseEntity<User> updateUser(@PathVariable String userId, @RequestBody User updatedUser) {
         try {
             User user = userService.updateUser(userId, updatedUser);
             return new ResponseEntity<>(user, HttpStatus.OK);
@@ -78,7 +78,7 @@ public class UserController {
 
 
     @DeleteMapping("/{userId}")
-    public ResponseEntity deleteUser(@PathVariable Long userId) {
+    public ResponseEntity deleteUser(@PathVariable String userId) {
         try {
             userService.deleteUser(userId);
             return new ResponseEntity<>(HttpStatus.OK);
@@ -88,9 +88,19 @@ public class UserController {
             log.error("Failed to get user from DB ");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
+    }
 
-
-
+    @GetMapping("/mergeMongoToMysql")
+    public ResponseEntity<List<User>> mergeMongoToMysql() {
+        try {
+            List<User> users =userService.migrationMongoToMySQl();// userService.getUser(userId);
+            return new ResponseEntity<>(users, HttpStatus.OK);
+        }catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (Exception e) {
+            log.error("Failed to get user from DB ");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
 
