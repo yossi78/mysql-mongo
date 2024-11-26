@@ -3,9 +3,12 @@ import com.example.mysql_mongo.exception.ResourceNotFoundException;
 import com.example.mysql_mongo.repository.MongoUserRepository;
 import com.example.mysql_mongo.repository.MySQLUserRepository;
 import com.example.mysql_mongo.repository.User;
+import com.example.mysql_mongo.repository.UserDocument;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalTime;
 import java.util.List;
 
 
@@ -25,8 +28,17 @@ public class UserService {
 
 
 
-    public User createUser(User user) {
-        return mySQLUserRepository.save(user);
+    public Object createUser(User user) {
+        if (isBusinessHours()) {
+            return mySQLUserRepository.save(user);
+        } else {
+            UserDocument userDocument = UserDocument.builder()
+                    .id(String.valueOf(user.getId()))
+                    .lastName(user.getLastName())
+                    .firstName(user.getFirstName())
+                    .build();
+            return mongoUserRepository.save(userDocument);
+        }
     }
 
 
@@ -49,7 +61,7 @@ public class UserService {
 
     public void deleteUser(Long userId) {
         checkUserExistance(userId);
-        mySQLUserRepository.deleteById(String.valueOf(userId));
+        mySQLUserRepository.deleteById(userId);
     }
 
 
@@ -61,7 +73,7 @@ public class UserService {
 
 
     private User checkUserExistance(Long userId){
-        User user =  mySQLUserRepository.findById(String.valueOf(userId)).orElse(null);
+        User user =  mySQLUserRepository.findById(userId).orElse(null);
         if(user==null){
             log.error("The user has not been found , userId="+userId);
             throw new ResourceNotFoundException("The user has not been found");
@@ -70,6 +82,12 @@ public class UserService {
         return user;
     }
 
+
+    private boolean isBusinessHours() {
+        LocalTime now = LocalTime.now();
+        return now.isAfter(LocalTime.of(8, 0)) && now.isBefore(LocalTime.of(10, 0));
+//        return now.isAfter(LocalTime.of(8, 0)) && now.isBefore(LocalTime.of(17, 0));
+    }
 
 
 }

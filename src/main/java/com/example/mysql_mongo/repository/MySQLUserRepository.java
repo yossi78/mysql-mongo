@@ -5,7 +5,7 @@ import org.springframework.stereotype.Repository;
 
 
 @Repository
-public interface MySQLUserRepository extends JpaRepository<User, String> {
+public interface MySQLUserRepository extends JpaRepository<User, Long> {
 
 
 }

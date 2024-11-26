@@ -1,15 +1,13 @@
 package com.example.mysql_mongo.repository;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.Id; // Make sure this is the JPA annotation
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-
-
 
 @Entity
 @Data
@@ -22,5 +20,4 @@ public class User {
     private Long id;
     private String firstName;
     private String lastName;
-
 }
