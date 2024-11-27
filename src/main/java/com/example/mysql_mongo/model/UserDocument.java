@@ -1,4 +1,4 @@
-package com.example.mysql_mongo.repository;
+package com.example.mysql_mongo.model;
 
 
 import lombok.AllArgsConstructor;

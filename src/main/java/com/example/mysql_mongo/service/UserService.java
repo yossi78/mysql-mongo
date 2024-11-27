@@ -2,14 +2,12 @@ package com.example.mysql_mongo.service;
 import com.example.mysql_mongo.exception.ResourceNotFoundException;
 import com.example.mysql_mongo.repository.MongoUserRepository;
 import com.example.mysql_mongo.repository.MySQLUserRepository;
-import com.example.mysql_mongo.repository.User;
-import com.example.mysql_mongo.repository.UserDocument;
+import com.example.mysql_mongo.model.UserEntity;
+import com.example.mysql_mongo.model.UserDocument;
 import com.example.mysql_mongo.util.ConvertUtil;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import java.time.LocalTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -31,13 +29,13 @@ public class UserService {
 
 
 
-    public Object createUser(User user) {
+    public Object createUser(UserEntity userEntity) {
         if (isBusinessHours()) {
-            return mySQLUserRepository.save(user);
+            return mySQLUserRepository.save(userEntity);
         } else {
             UserDocument userDocument = UserDocument.builder()
-                    .lastName(user.getLastName())
-                    .firstName(user.getFirstName())
+                    .lastName(userEntity.getLastName())
+                    .firstName(userEntity.getFirstName())
                     .build();
             return mongoUserRepository.save(userDocument);
         }
@@ -66,14 +64,14 @@ public class UserService {
 
 
 
-    public List<User> migrationMongoToMySQl(){
+    public List<UserEntity> migrationMongoToMySQl(){
         List<UserDocument> users;
         users =  mongoUserRepository.findAll();
 
-        List<User> mysqlList = users.stream()
+        List<UserEntity> mysqlList = users.stream()
                 .map(a -> {
                     try {
-                        return new User(null,a.getFirstName(),a.getLastName());
+                        return new UserEntity(null,a.getFirstName(),a.getLastName());
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
@@ -84,22 +82,43 @@ public class UserService {
     }
 
     public void deleteUser(String userId) {
-        checkUserExistance(userId);
-        mySQLUserRepository.deleteById(Long.valueOf(userId));
+        if(isBusinessHours() && isEntityExist(userId)){
+            mySQLUserRepository.deleteById(userId);
+        }else if(!isBusinessHours() && isDocumentExist(userId)){
+            mongoUserRepository.deleteById(userId);
+        }else {
+            throw new ResourceNotFoundException("User has not been found");
+        }
+
     }
 
 
-    public User updateUser(String userId, User updatedUser) {
-        checkUserExistance(userId);
-        updatedUser.setId(Long.valueOf(userId));
-        return mySQLUserRepository.save(updatedUser);
+    public Object updateUser(String userId, UserEntity updatedUser) throws Exception {
+        if (isBusinessHours()) {
+            updatedUser.setId(userId);
+            if (isEntityExist(userId)) {
+                return mySQLUserRepository.save(updatedUser);
+            }else{
+                throw new ResourceNotFoundException("User has not been found");
+            }
+        }
+        UserDocument userDocument = ConvertUtil.convertObject(updatedUser, UserDocument.class);
+        userDocument.setId(userId);
+        return updateUserDocument(userDocument);
     }
 
+    private UserDocument updateUserDocument(UserDocument userDocument){
+        if (isDocumentExist(userDocument.getId())) {
+            return mongoUserRepository.save(userDocument);
+        }  else{
+            throw new ResourceNotFoundException("User has not been found");
+        }
+    }
 
     private Object checkUserExistance(String userId){
         Object user;
         if (isBusinessHours()) {
-            user = mySQLUserRepository.findById(Long.valueOf(userId)).orElse(null);
+           user = mySQLUserRepository.findById(userId).orElse(null);
         } else {
             user = mongoUserRepository.findById(userId).orElse(null);
         }
@@ -114,9 +133,29 @@ public class UserService {
 
     private boolean isBusinessHours() {
         LocalTime now = LocalTime.now();
-  //    return now.isAfter(LocalTime.of(8, 0)) && now.isBefore(LocalTime.of(10, 0));                         // MONGODB
-        return now.isAfter(LocalTime.of(8, 0)) && now.isBefore(LocalTime.of(17, 0));  // MYSQL
+      return now.isAfter(LocalTime.of(8, 0)) && now.isBefore(LocalTime.of(10, 0));                         // MONGODB
+ //       return now.isAfter(LocalTime.of(8, 0)) && now.isBefore(LocalTime.of(17, 0));  // MYSQL
     }
+
+
+
+
+    private Boolean isEntityExist(String userId){
+        if(mySQLUserRepository.findById(userId).orElse(null)!=null){
+            return true;
+        }
+        return false;
+    }
+
+
+    private Boolean isDocumentExist(String userId){
+        if(mongoUserRepository.findById(userId).orElse(null)!=null){
+            return true;
+        }
+        return false;
+    }
+
+
 
 
 }

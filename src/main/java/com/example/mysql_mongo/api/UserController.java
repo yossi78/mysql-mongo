@@ -1,6 +1,6 @@
 package com.example.mysql_mongo.api;
 import com.example.mysql_mongo.exception.ResourceNotFoundException;
-import com.example.mysql_mongo.repository.User;
+import com.example.mysql_mongo.model.UserEntity;
 import com.example.mysql_mongo.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -24,9 +24,9 @@ public class UserController {
 
 
     @PostMapping
-    public Object createUser(@RequestBody User user) {
+    public Object createUser(@RequestBody UserEntity userEntity) {
         try {
-            Object savedUser = userService.createUser(user);
+            Object savedUser = userService.createUser(userEntity);
             return new ResponseEntity<>(savedUser, HttpStatus.OK);
         } catch (Exception e) {
             log.error("Failed to save user to DB ");
@@ -64,9 +64,9 @@ public class UserController {
 
 
     @PutMapping("/{userId}")
-    public ResponseEntity<User> updateUser(@PathVariable String userId, @RequestBody User updatedUser) {
+    public ResponseEntity<Object> updateUser(@PathVariable String userId, @RequestBody UserEntity updatedUser) {
         try {
-            User user = userService.updateUser(userId, updatedUser);
+            Object user = userService.updateUser(userId, updatedUser);
             return new ResponseEntity<>(user, HttpStatus.OK);
         }catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
@@ -91,10 +91,10 @@ public class UserController {
     }
 
     @GetMapping("/mergeMongoToMysql")
-    public ResponseEntity<List<User>> mergeMongoToMysql() {
+    public ResponseEntity<List<UserEntity>> mergeMongoToMysql() {
         try {
-            List<User> users =userService.migrationMongoToMySQl();// userService.getUser(userId);
-            return new ResponseEntity<>(users, HttpStatus.OK);
+            List<UserEntity> userEntities =userService.migrationMongoToMySQl();// userService.getUser(userId);
+            return new ResponseEntity<>(userEntities, HttpStatus.OK);
         }catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         } catch (Exception e) {
