@@ -19,7 +19,7 @@ public class UserEntity {
     @Id
     @GeneratedValue(generator = "uuid")
     @GenericGenerator(name = "uuid", strategy = "uuid2")
-    private String id; // Changed from Long to String
+    private String id;
     private String firstName;
     private String lastName;
 }
